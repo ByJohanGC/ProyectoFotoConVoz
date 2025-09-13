@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Captura por Voz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+    video, canvas {
+      margin: 10px auto;
+      display: block;
+      border: 2px solid #333;
+      border-radius: 10px;
+      max-width: 100%;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Captura con tu voz</h1>
+  <p>Di la palabra <b>"foto"</b> para tomar una captura</p>
+
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" width="640" height="480"></canvas>
+  <br>
+  <button id="downloadBtn">Descargar Foto</button>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert("Error al acceder a la cámara: " + err);
+      });
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "es-ES";
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.start();
+
+      recognition.onresult = (event) => {
+        const texto = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+        if (texto.includes("foto")) {
+          tomarFoto();
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Error en reconocimiento:", event.error);
+      };
+    } else {
+      alert("Tu navegador no soporta Web Speech API");
+    }
+
+    function tomarFoto() {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    }
+
+    downloadBtn.addEventListener("click", () => {
+      const enlace = document.createElement("a");
+      enlace.download = "captura.png";
+      enlace.href = canvas.toDataURL("image/png");
+      enlace.click();
+    });
+  </script>
+</body>
+</html>
